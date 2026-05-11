@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pink: #D4537E;
+  --color-pink-light: #FBEAF0;
+  --color-pink-dark: #993556;
+  --color-surface: #1a1a1a;
+  --color-surface-2: #242424;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0d0d0d] text-white/90 antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  }
+}
+
+@layer utilities {
+  .pulse-ring {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.7; }
+}

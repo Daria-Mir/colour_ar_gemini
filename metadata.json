@@ -1,0 +1,8 @@
+{
+  "name": "Hue & You",
+  "description": "AI-powered color analysis and AR makeup try-on.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
