@@ -6,9 +6,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, Upload, ChevronLeft, ExternalLink, Check, Sparkles, ShoppingBag, Eye, Heart } from 'lucide-react';
-import { FaceMesh } from '@mediapipe/face_mesh';
-import { Camera as MPCamera } from '@mediapipe/camera_utils';
 import { analyzeColors, findProducts, type ColorAnalysis, type Product } from './services/geminiService';
+
+// MediaPipe types for TS
+declare global {
+  interface Window {
+    FaceMesh: any;
+    Camera: any;
+  }
+}
 
 // --- Types ---
 type Screen = 'upload' | 'analysis' | 'shop' | 'products' | 'ar';
@@ -131,18 +137,21 @@ export default function App() {
     const initAR = async () => {
       if (!videoRef.current || !canvasRef.current) return;
       setArLoaded(false);
+      setError('');
 
       // Using global MediaPipe objects from index.html scripts
       const FaceMeshNative = (window as any).FaceMesh;
       const CameraNative = (window as any).Camera;
 
       if (!FaceMeshNative || !CameraNative) {
-        setError("MediaPipe scripts not loaded. Please check your connection.");
+        setError("AI camera modules not ready. Please refresh the page.");
         return;
       }
 
       const faceMesh = new FaceMeshNative({
-        locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+        locateFile: (file: string) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+        }
       });
 
       faceMesh.setOptions({
@@ -257,8 +266,8 @@ export default function App() {
                         <Upload size={32} className="text-white/40" />
                       </div>
                       <div>
-                        <p className="text-base font-medium">Tap to upload or take a photo</p>
-                        <p className="text-xs text-white/45 mt-1">Camera roll and instant photos supported</p>
+                        <p className="text-base font-medium">Upload or take a photo</p>
+                        <p className="text-xs text-white/45 mt-1">Supports library, camera roll, and files</p>
                       </div>
                     </div>
                   )}
@@ -530,24 +539,47 @@ export default function App() {
                     {error}
                  </div>
               )}
+
+              {/* Product Catalog */}
+              <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar mb-5 scroll-smooth">
+                {products.map((p, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => { setSelectedProduct(p); setArColor(p.hex); }}
+                    className={`flex flex-col min-w-[110px] p-2.5 rounded-xl transition-all shrink-0 text-left border ${selectedProduct === p ? 'bg-pink/10 border-pink' : 'bg-white/5 border-transparent'}`}
+                  >
+                    <div className="w-full h-10 rounded-lg mb-2 shadow-sm border border-white/10" style={{ backgroundColor: p.hex }} />
+                    <p className="text-[9px] uppercase tracking-wider text-white/30 truncate">{p.brand}</p>
+                    <p className="text-[11px] font-medium text-white/90 truncate">{p.shade}</p>
+                  </button>
+                ))}
+              </div>
+
               {selectedProduct && (
-                <div className="mb-5">
-                  <p className="text-xs text-white/50 mb-1">{selectedProduct.brand} · {selectedProduct.name}</p>
-                  <p className="text-xl font-medium">{selectedProduct.shade}</p>
+                <div className="mb-5 px-1">
+                  <p className="text-[11px] text-pink-light/60 font-medium tracking-wide mb-1 flex items-center gap-1.5">
+                    <ShoppingBag size={12} /> Currently trying on
+                  </p>
+                  <p className="text-lg font-medium leading-tight">{selectedProduct.brand} {selectedProduct.name}</p>
                 </div>
               )}
 
-              {/* Swatches */}
-              <div className="flex gap-2.5 overflow-x-auto pb-4 no-scrollbar mb-4">
-                {analysis?.lipShades?.map((s, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => { setArColor(s.hex); }}
-                    className={`w-10 h-10 rounded-full shrink-0 border-2 transition-all ${arColor === s.hex ? 'border-white scale-110' : 'border-transparent'}`}
-                    style={{ backgroundColor: s.hex }}
-                  />
-                ))}
-              </div>
+              {/* Swatches (Refined shades from analysis) */}
+              {selectedCat === 'makeup' && analysis?.lipShades && (
+                <div className="flex items-center gap-3 mb-6">
+                  <label className="text-[10px] uppercase tracking-widest text-white/30 shrink-0">Shades</label>
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                    {analysis.lipShades.map((s, i) => (
+                      <button 
+                        key={i}
+                        onClick={() => { setArColor(s.hex); }}
+                        className={`w-8 h-8 rounded-full shrink-0 border-2 transition-all ${arColor === s.hex ? 'border-white scale-110' : 'border-transparent'}`}
+                        style={{ backgroundColor: s.hex }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Intensity */}
               <div className="flex items-center gap-4 mb-6">
