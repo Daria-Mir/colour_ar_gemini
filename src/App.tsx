@@ -132,8 +132,17 @@ export default function App() {
       if (!videoRef.current || !canvasRef.current) return;
       setArLoaded(false);
 
-      const faceMesh = new FaceMesh({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+      // Using global MediaPipe objects from index.html scripts
+      const FaceMeshNative = (window as any).FaceMesh;
+      const CameraNative = (window as any).Camera;
+
+      if (!FaceMeshNative || !CameraNative) {
+        setError("MediaPipe scripts not loaded. Please check your connection.");
+        return;
+      }
+
+      const faceMesh = new FaceMeshNative({
+        locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
       });
 
       faceMesh.setOptions({
@@ -143,7 +152,7 @@ export default function App() {
         minTrackingConfidence: 0.5
       });
 
-      faceMesh.onResults((results) => {
+      faceMesh.onResults((results: any) => {
         const canvas = canvasRef.current;
         const video = videoRef.current;
         if (!canvas || !video) return;
@@ -163,7 +172,7 @@ export default function App() {
       faceMeshRef.current = faceMesh;
 
       try {
-        const camera = new MPCamera(videoRef.current, {
+        const camera = new CameraNative(videoRef.current, {
           onFrame: async () => {
             if (videoRef.current && faceMeshRef.current) {
               await faceMeshRef.current.send({ image: videoRef.current });
@@ -214,7 +223,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] max-w-[500px] mx-auto bg-[#0d0d0d] overflow-hidden relative">
+    <div className="flex flex-col h-full max-w-[500px] mx-auto bg-[#0d0d0d] overflow-hidden relative">
       <AnimatePresence mode="wait">
         
         {/* --- Screen: Upload --- */}
@@ -516,6 +525,11 @@ export default function App() {
 
             {/* AR Overlay Bottom */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/85 to-transparent p-6 pb-12 z-10">
+              {error && (
+                 <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-xs text-center">
+                    {error}
+                 </div>
+              )}
               {selectedProduct && (
                 <div className="mb-5">
                   <p className="text-xs text-white/50 mb-1">{selectedProduct.brand} · {selectedProduct.name}</p>
