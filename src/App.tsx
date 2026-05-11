@@ -539,7 +539,7 @@ export default function App() {
 
               {/* Swatches */}
               <div className="flex gap-2.5 overflow-x-auto pb-4 no-scrollbar mb-4">
-                {analysis?.lipShades.map((s, i) => (
+                {analysis?.lipShades?.map((s, i) => (
                   <button 
                     key={i}
                     onClick={() => { setArColor(s.hex); }}
