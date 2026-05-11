@@ -1,6 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const apiKey = process.env.GEMINI_API_KEY || "";
+if (!apiKey) {
+  console.warn("GEMINI_API_KEY is missing. AI features will not work until an API key is provided.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 export interface ColorAnalysis {
   season: string;
@@ -48,7 +53,7 @@ Structure:
 }`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     contents: [
       { text: prompt },
       {
@@ -83,7 +88,7 @@ Shopping for: ${subcategories.join(", ")} (category: ${category})
 Respond with a JSON array of exactly 5 product recommendations.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
